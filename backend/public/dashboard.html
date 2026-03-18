@@ -74,7 +74,7 @@
     fetch('/api/salas').then(r=>r.json()).then(salas=>{
       const c=document.getElementById('salas-container');
       if(!salas.length){ c.innerHTML='<p>Nenhuma sala cadastrada.</p>'; return; }
-      c.innerHTML=salas.map(s=>`<div class="sala-item"><div><div class="info">${s.nome}</div><div class="andar">${s.andar} - ${s.descricao}</div></div><a href="/api/salas/${s.id}/qrcode" class="btn-qr" target="_blank">📷 QR Code</a></div>`).join('');
+      c.innerHTML=salas.map(s=>`<div class="sala-item"><div><div class="info">${s.nome}</div></div><a href="/api/salas/${s.id}/qrcode" class="btn-qr" target="_blank">📷 QR Code</a></div>`).join('');
     });
   </script>
 </body>
