@@ -100,6 +100,9 @@
     async function loadStats() {
       const r = await fetch('/api/admin/stats');
       const d = await r.json();
+          if (d.erro || !d.presencas_hoje) {
+                  d = { presencas_hoje: 0, total_professores: 0, total_alunos: 0, total_salas: 0 };
+                }
       document.getElementById('stats-content').innerHTML = `
         <div style="display:grid; grid-template-columns:repeat(auto-fit, minmax(200px, 1fr)); gap:16px; margin-top:20px;">
           <div style="background:#e3f2fd; padding:20px; border-radius:8px;"><h3>${d.presencas_hoje}</h3><p>Presenças Hoje</p></div>
