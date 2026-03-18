@@ -1,0 +1,68 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Check-in - Escanear QR Code</title>
+  <script src="https://unpkg.com/html5-qrcode"></script>
+  <style>
+    * { box-sizing: border-box; margin: 0; padding: 0; }
+    body { font-family: Arial, sans-serif; background: #f0f2f5; }
+    nav { background: #1a73e8; color: white; padding: 16px 24px; display: flex; justify-content: space-between; align-items: center; }
+    nav h1 { font-size: 18px; }
+    nav a { color: white; text-decoration: none; background: rgba(255,255,255,0.2); padding: 6px 14px; border-radius: 6px; }
+    .container { max-width: 600px; margin: 32px auto; padding: 0 16px; }
+    .card { background: white; border-radius: 12px; padding: 24px; box-shadow: 0 2px 8px rgba(0,0,0,0.08); margin-bottom: 20px; }
+    h2 { color: #333; margin-bottom: 16px; }
+    #reader { width: 100%; border-radius: 8px; overflow: hidden; }
+    #result { margin-top: 20px; padding: 16px; border-radius: 8px; display: none; }
+    #result.success { background: #e8f5e9; color: #2e7d32; border: 1px solid #a5d6a7; }
+    #result.error { background: #ffebee; color: #c62828; border: 1px solid #ef9a9a; }
+    .status { font-weight: 500; font-size: 18px; margin-bottom: 8px; }
+    select { width: 100%; padding: 10px; border-radius: 6px; border: 1px solid #ddd; font-size: 16px; margin-bottom: 16px; }
+    label { display: block; margin-bottom: 6px; font-weight: 500; color: #555; }
+  </style>
+</head>
+<body>
+  <nav>
+    <h1>📸 Escanear QR Code</h1>
+    <a href="/dashboard">Voltar</a>
+  </nav>
+  <div class="container">
+    <div class="card">
+      <h2>Selecione a Sala</h2>
+      <label for="sala-select">Sala:</label>
+      <select id="sala-select"><option value="">Carregando...</option></select>
+    </div>
+    <div class="card">
+      <h2>Escanear QR Code do Aluno</h2>
+      <div id="reader"></div>
+      <div id="result"></div>
+    </div>
+  </div>
+  <script>
+    let salaId = null;
+    let scanning = false;
+    fetch('/api/salas').then(r=>r.json()).then(salas=>{
+      const sel=document.getElementById('sala-select');
+      sel.innerHTML=salas.map(s=>`<option value="${s.id}">${s.nome} - ${s.andar}</option>`).join('');
+      salaId=salas[0]?.id;
+      sel.onchange=()=>{ salaId=sel.value; };
+    });
+    const html5QrCode = new Html5Qrcode("reader");
+    html5QrCode.start({ facingMode: "environment" }, { fps: 10, qrbox: 250 }, (decodedText) => {
+      if(scanning) return;
+      scanning = true;
+      const resultDiv = document.getElementById('result');
+      fetch('/api/checkin', { method: 'POST', headers: {'Content-Type':'application/json'}, body: JSON.stringify({ qr_token: decodedText, sala_id: salaId }) })
+        .then(r=>r.json())
+        .then(data=>{
+          resultDiv.style.display='block';
+          if(data.error){ resultDiv.className='error'; resultDiv.innerHTML=`<div class="status">❌ Erro</div>${data.error}`; }
+          else { resultDiv.className='success'; resultDiv.innerHTML=`<div class="status">✅ Presença registrada!</div>${data.message||''}`; }
+          setTimeout(()=>{ resultDiv.style.display='none'; scanning=false; }, 3000);
+        });
+    }, ()=>{});
+  </script>
+</body>
+</html>
