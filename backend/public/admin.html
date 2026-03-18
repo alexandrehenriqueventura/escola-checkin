@@ -1,0 +1,203 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Painel de Administração</title>
+  <style>
+    * { box-sizing: border-box; margin: 0; padding: 0; }
+    body { font-family: Arial, sans-serif; background: #f0f2f5; }
+    nav { background: #1a73e8; color: white; padding: 16px 24px; display: flex; justify-content: space-between; align-items: center; }
+    nav h1 { font-size: 20px; }
+    .logout { color: white; text-decoration: none; background: rgba(255,255,255,0.2); padding: 6px 14px; border-radius: 6px; }
+    .container { max-width: 1200px; margin: 32px auto; padding: 0 16px; }
+    .tabs { display: flex; gap: 8px; margin-bottom: 24px; }
+    .tab { background: white; border: none; padding: 12px 24px; border-radius: 8px 8px 0 0; cursor: pointer; font-size: 16px; }
+    .tab.active { background: #1a73e8; color: white; }
+    .panel { background: white; border-radius: 12px; padding: 24px; box-shadow: 0 2px 8px rgba(0,0,0,0.08); display: none; }
+    .panel.active { display: block; }
+    table { width: 100%; border-collapse: collapse; }
+    th, td { padding: 12px; text-align: left; border-bottom: 1px solid #eee; }
+    th { background: #f8f9fa; font-weight: 600; }
+    button { background: #1a73e8; color: white; border: none; padding: 8px 16px; border-radius: 6px; cursor: pointer; }
+    button:hover { background: #1557b0; }
+    .btn-danger { background: #d32f2f; }
+    .btn-danger:hover { background: #b71c1c; }
+    input, select { width: 100%; padding: 10px; border: 1px solid #ddd; border-radius: 6px; margin-bottom: 12px; }
+    .form-group { margin-bottom: 16px; }
+    label { display: block; margin-bottom: 6px; font-weight: 500; }
+  </style>
+</head>
+<body>
+  <nav>
+    <h1>⚙️ Painel de Administração</h1>
+    <a href="/auth/logout" class="logout">Sair</a>
+  </nav>
+  <div class="container">
+    <div class="tabs">
+      <button class="tab active" onclick="showTab('stats')">📊 Estatísticas</button>
+      <button class="tab" onclick="showTab('professores')">👨‍🏫 Professores</button>
+      <button class="tab" onclick="showTab('alunos')">👨‍🎓 Alunos</button>
+      <button class="tab" onclick="showTab('salas')">🏫 Salas</button>
+      <button class="tab" onclick="showTab('admins')">🔐 Administradores</button>
+    </div>
+    
+    <div id="stats-panel" class="panel active">
+      <h2>Estatísticas do Sistema</h2>
+      <div id="stats-content">Carregando...</div>
+    </div>
+    
+    <div id="professores-panel" class="panel">
+      <h2>Gerenciar Professores</h2>
+      <button onclick="showAddProf()">➕ Adicionar Professor</button>
+      <div id="prof-form" style="display:none; margin:20px 0; padding:20px; background:#f8f9fa; border-radius:8px;">
+        <input id="prof-nome" placeholder="Nome" />
+        <input id="prof-email" placeholder="Email" />
+        <input id="prof-disciplina" placeholder="Disciplina" />
+        <button onclick="addProf()">Salvar</button>
+        <button onclick="document.getElementById('prof-form').style.display='none'">Cancelar</button>
+      </div>
+      <table id="prof-table"><thead><tr><th>Nome</th><th>Email</th><th>Disciplina</th><th>Ações</th></tr></thead><tbody></tbody></table>
+    </div>
+    
+    <div id="alunos-panel" class="panel">
+      <h2>Gerenciar Alunos</h2>
+      <button onclick="showAddAluno()">➕ Adicionar Aluno</button>
+      <div id="aluno-form" style="display:none; margin:20px 0; padding:20px; background:#f8f9fa; border-radius:8px;">
+        <input id="aluno-nome" placeholder="Nome" />
+        <input id="aluno-matricula" placeholder="Matrícula" />
+        <input id="aluno-turma" placeholder="Turma" />
+        <button onclick="addAluno()">Salvar</button>
+        <button onclick="document.getElementById('aluno-form').style.display='none'">Cancelar</button>
+      </div>
+      <table id="aluno-table"><thead><tr><th>Nome</th><th>Matrícula</th><th>Turma</th><th>QR Token</th><th>Ações</th></tr></thead><tbody></tbody></table>
+    </div>
+    
+    <div id="salas-panel" class="panel">
+      <h2>Salas e Ocupantes</h2>
+      <div id="salas-content">Carregando...</div>
+    </div>
+    
+    <div id="admins-panel" class="panel">
+      <h2>Administradores</h2>
+      <div id="admins-content">Carregando...</div>
+    </div>
+  </div>
+  
+  <script>
+    function showTab(name) {
+      document.querySelectorAll('.tab').forEach(t => t.classList.remove('active'));
+      document.querySelectorAll('.panel').forEach(p => p.classList.remove('active'));
+      event.target.classList.add('active');
+      document.getElementById(name + '-panel').classList.add('active');
+      if(name==='stats') loadStats();
+      if(name==='professores') loadProfs();
+      if(name==='alunos') loadAlunos();
+      if(name==='salas') loadSalas();
+      if(name==='admins') loadAdmins();
+    }
+    
+    async function loadStats() {
+      const r = await fetch('/api/admin/stats');
+      const d = await r.json();
+      document.getElementById('stats-content').innerHTML = `
+        <div style="display:grid; grid-template-columns:repeat(auto-fit, minmax(200px, 1fr)); gap:16px; margin-top:20px;">
+          <div style="background:#e3f2fd; padding:20px; border-radius:8px;"><h3>${d.presencas_hoje}</h3><p>Presenças Hoje</p></div>
+          <div style="background:#f3e5f5; padding:20px; border-radius:8px;"><h3>${d.total_professores}</h3><p>Professores</p></div>
+          <div style="background:#e8f5e9; padding:20px; border-radius:8px;"><h3>${d.total_alunos}</h3><p>Alunos</p></div>
+          <div style="background:#fff3e0; padding:20px; border-radius:8px;"><h3>${d.total_salas}</h3><p>Salas</p></div>
+        </div>
+      `;
+    }
+    
+    async function loadProfs() {
+      const r = await fetch('/api/admin/professores');
+      const d = await r.json();
+      const tbody = document.querySelector('#prof-table tbody');
+      tbody.innerHTML = d.professores.map(p => `
+        <tr><td>${p.nome}</td><td>${p.email}</td><td>${p.disciplina||'-'}</td>
+        <td><button class="btn-danger" onclick="delProf('${p.id}')">Remover</button></td></tr>
+      `).join('');
+    }
+    
+    function showAddProf() { document.getElementById('prof-form').style.display='block'; }
+    
+    async function addProf() {
+      const nome = document.getElementById('prof-nome').value;
+      const email = document.getElementById('prof-email').value;
+      const disciplina = document.getElementById('prof-disciplina').value;
+      await fetch('/api/admin/professores', {
+        method: 'POST',
+        headers: {'Content-Type': 'application/json'},
+        body: JSON.stringify({ nome, email, disciplina })
+      });
+      document.getElementById('prof-form').style.display='none';
+      loadProfs();
+    }
+    
+    async function delProf(id) {
+      if(!confirm('Remover professor?')) return;
+      await fetch(`/api/admin/professores/${id}`, { method: 'DELETE' });
+      loadProfs();
+    }
+    
+    async function loadAlunos() {
+      const r = await fetch('/api/admin/alunos');
+      const d = await r.json();
+      const tbody = document.querySelector('#aluno-table tbody');
+      tbody.innerHTML = d.alunos.map(a => `
+        <tr><td>${a.nome}</td><td>${a.matricula}</td><td>${a.turma||'-'}</td><td>${a.qr_token.substring(0,20)}...</td>
+        <td><button class="btn-danger" onclick="delAluno('${a.id}')">Remover</button></td></tr>
+      `).join('');
+    }
+    
+    function showAddAluno() { document.getElementById('aluno-form').style.display='block'; }
+    
+    async function addAluno() {
+      const nome = document.getElementById('aluno-nome').value;
+      const matricula = document.getElementById('aluno-matricula').value;
+      const turma = document.getElementById('aluno-turma').value;
+      await fetch('/api/admin/alunos', {
+        method: 'POST',
+        headers: {'Content-Type': 'application/json'},
+        body: JSON.stringify({ nome, matricula, turma })
+      });
+      document.getElementById('aluno-form').style.display='none';
+      loadAlunos();
+    }
+    
+    async function delAluno(id) {
+      if(!confirm('Remover aluno?')) return;
+      await fetch(`/api/admin/alunos/${id}`, { method: 'DELETE' });
+      loadAlunos();
+    }
+    
+    async function loadSalas() {
+      const r = await fetch('/api/admin/salas');
+      const d = await r.json();
+      let html = '<div style="display:grid; gap:16px;">';
+      for(const s of d.salas) {
+        const o = await fetch(`/api/admin/salas/${s.id}/ocupantes`).then(r=>r.json());
+        html += `<div style="border:1px solid #ddd; padding:16px; border-radius:8px;">
+          <h3>${s.nome}</h3>
+          <p>Ocupantes: ${o.ocupantes.length}</p>
+          ${o.ocupantes.map(oc => `<div style="margin-top:8px;">• ${oc.alunos?.nome || 'N/A'} - ${oc.alunos?.turma || ''}</div>`).join('')}
+        </div>`;
+      }
+      document.getElementById('salas-content').innerHTML = html + '</div>';
+    }
+    
+    async function loadAdmins() {
+      const r = await fetch('/api/admin/administradores');
+      const d = await r.json();
+      document.getElementById('admins-content').innerHTML = `
+        <table><thead><tr><th>Nome</th><th>Email</th></tr></thead><tbody>
+        ${d.administradores.map(a => `<tr><td>${a.nome||'N/A'}</td><td>${a.email}</td></tr>`).join('')}
+        </tbody></table>
+      `;
+    }
+    
+    loadStats();
+  </script>
+</body>
+</html>
