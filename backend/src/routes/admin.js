@@ -4,7 +4,7 @@ const { supabaseAdmin } = require('../services/supabase');
 const { autenticar } = require('../middleware/authMiddleware');
 
 async function isAdmin(req, res, next) {
-  const { data } = await supabaseAdmin.from('admins')
+  const { data } = await supabaseAdmin.from('administradores')
     .select('id').eq('email', req.user.email).single();
   if (!data) return res.status(403).json({ erro: 'Acesso restrito a coordenacao.' });
   next();
@@ -92,4 +92,76 @@ router.get('/historico', autenticar, isAdmin, async (req, res) => {
   res.json({ historico: data });
 });
 
+// ALUNOS
+router.get('/alunos', autenticar, isAdmin, async (req, res) => {
+  const { data, error } = await supabaseAdmin.from('alunos').select('*').order('nome');
+  if (error) return res.status(500).json({ erro: error.message });
+  res.json({ alunos: data });
+});
+
+router.post('/alunos', autenticar, isAdmin, async (req, res) => {
+  const { nome, matricula, turma } = req.body;
+  if (!nome || !matricula) return res.status(400).json({ erro: 'Nome e matricula sao obrigatorios.' });
+  const { data, error } = await supabaseAdmin.from('alunos')
+    .insert({ nome, matricula, turma, ativo: true }).select().single();
+  if (error) return res.status(500).json({ erro: error.message });
+  res.status(201).json({ aluno: data });
+});
+
+router.delete('/alunos/:id', autenticar, isAdmin, async (req, res) => {
+  const { error } = await supabaseAdmin.from('alunos').delete().eq('id', req.params.id);
+  if (error) return res.status(500).json({ erro: error.message });
+  res.json({ mensagem: 'Aluno removido.' });
+});
+
+// OCUPANTES POR SALA (presencas ativas)
+router.get('/salas/:id/ocupantes', autenticar, isAdmin, async (req, res) => {
+  const { data, error } = await supabaseAdmin
+    .from('presencas')
+    .select('*, alunos(nome, matricula, turma)')
+    .eq('sala_id', req.params.id)
+    .eq('ativa', true)
+    .order('timestamp', { ascending: false });
+  if (error) return res.status(500).json({ erro: error.message });
+  res.json({ ocupantes: data });
+});
+
+// LISTA DE ADMINISTRADORES
+router.get('/administradores', autenticar, isAdmin, async (req, res) => {
+  const { data, error } = await supabaseAdmin.from('administradores').select('*').order('nome');
+  if (error) return res.status(500).json({ erro: error.message });
+  res.json({ administradores: data });
+});
+
+router.post('/administradores', autenticar, isAdmin, async (req, res) => {
+  const { email, nome } = req.body;
+  if (!email) return res.status(400).json({ erro: 'Email obrigatorio.' });
+  const { data, error } = await supabaseAdmin.from('administradores')
+    .insert({ email, nome }).select().single();
+  if (error) return res.status(500).json({ erro: error.message });
+  res.status(201).json({ administrador: data });
+});
+
+router.delete('/administradores/:id', autenticar, isAdmin, async (req, res) => {
+  const { error } = await supabaseAdmin.from('administradores').delete().eq('id', req.params.id);
+  if (error) return res.status(500).json({ erro: error.message });
+  res.json({ mensagem: 'Administrador removido.' });
+});
+
+// ESTATISTICAS ADMIN
+router.get('/stats', autenticar, isAdmin, async (req, res) => {
+  const hoje = new Date().toISOString().split('T')[0];
+  const [presHoje, totalProfs, totalAlunos, totalSalas] = await Promise.all([
+    supabaseAdmin.from('presencas').select('id', { count: 'exact' }).gte('timestamp', `${hoje}T00:00:00`),
+    supabaseAdmin.from('professores').select('id', { count: 'exact' }).eq('ativo', true),
+    supabaseAdmin.from('alunos').select('id', { count: 'exact' }).eq('ativo', true),
+    supabaseAdmin.from('salas').select('id', { count: 'exact' }),
+  ]);
+  res.json({
+    presencas_hoje: presHoje.count || 0,
+    total_professores: totalProfs.count || 0,
+    total_alunos: totalAlunos.count || 0,
+    total_salas: totalSalas.count || 0,
+  });
+});
 module.exports = router;
