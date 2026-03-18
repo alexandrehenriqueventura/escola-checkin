@@ -46,7 +46,7 @@ passport.use(new GoogleStrategy({
     if (aluno) return done(null, { ...aluno, tipo: 'aluno', foto: profile.photos[0]?.value });
     const { data: prof } = await supabase.from('professores').select('*').eq('email', email).single();
     if (prof) return done(null, { ...prof, tipo: 'professor', foto: profile.photos[0]?.value });
-    const { data: admin } = await supabase.from('admins').select('*').eq('email', email).single();
+    const { data: admin } = await supabase.from('administradores').select('*').eq('email', email).single();
     if (admin) return done(null, { ...admin, tipo: 'admin', foto: profile.photos[0]?.value });
     // Auto-register as aluno
     const { data: novo } = await supabase.from('alunos').insert({ nome: profile.displayName, email, google_id: profile.id, qr_token: profile.id + '_' + Date.now() }).select().single();
@@ -79,7 +79,7 @@ app.get('/lista', (req, res) => {
 });
 app.get('/admin', (req, res) => {
   if (!req.user) return res.redirect('/');
-  res.sendFile(path.join(__dirname, '../public/dashboard.html'));
+  res.sendFile(path.join(__dirname, '../public/admin.html'));
 });
 
 // API: current user
