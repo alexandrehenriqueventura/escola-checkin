@@ -45,7 +45,7 @@
     let scanning = false;
     fetch('/api/salas').then(r=>r.json()).then(salas=>{
       const sel=document.getElementById('sala-select');
-      sel.innerHTML=salas.map(s=>`<option value="${s.id}">${s.nome} - ${s.andar}</option>`).join('');
+          sel.innerHTML=salas.map(s=>`<option value="${s.id}">${s.nome}</option>`).join('');
       salaId=salas[0]?.id;
       sel.onchange=()=>{ salaId=sel.value; };
     });
