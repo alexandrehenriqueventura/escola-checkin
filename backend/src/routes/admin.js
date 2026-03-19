@@ -4,6 +4,10 @@ const { supabaseAdmin } = require('../services/supabase');
 const { autenticar } = require('../middleware/authMiddleware');
 
 a
+// Rota GET para servir a página de inicialização
+router.get('/init-admin', autenticar, (req, res) => {
+  const path = require('path');
+  res.sendFile(path.join(__dirname, '../../public/init-admin.html'));});
   
 // ROTA DE INICIALIZAÇÃO - Adiciona o primeiro administrador
 router.post('/init-admin', autenticar, async (req, res) => {
