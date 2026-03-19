@@ -3,7 +3,40 @@ const router = express.Router();
 const { supabaseAdmin } = require('../services/supabase');
 const { autenticar } = require('../middleware/authMiddleware');
 
-async function isAdmin(req, res, next) {
+a
+  
+// ROTA DE INICIALIZAÇÃO - Adiciona o primeiro administrador
+router.post('/init-admin', autenticar, async (req, res) => {
+    try {
+          // Verificar se já existe algum administrador
+          const { data: admins, error: checkError } = await supabaseAdmin
+                  .from('administradores').select('*');
+      
+          if (checkError) {
+                  return res.status(500).json({ error: 'Erro ao verificar administradores.' });
+                }
+      
+          // Se já existir algum admin, bloquear
+          if (admins && admins.length > 0) {
+                  return res.status(403).json({ error: 'Já existe um administrador cadastrado.' });
+                }
+      
+          // Adicionar o usuário logado como primeiro admin
+          const { error: insertError } = await supabaseAdmin
+                  .from('administradores').insert({ 
+                            name: req.user.name,
+                            email: req.user.email
+                                    });
+      
+          if (insertError) {
+                  return res.status(500).json({ error: 'Erro ao cadastrar administrador.' });
+                }
+      
+          res.json({ message: 'Primeiro administrador cadastrado com sucesso!' });
+        } catch (err) {
+          res.status(500).json({ error: 'Erro ao inicializar administrador.' });
+        }
+  });sync function isAdmin(req, res, next) {
   const { data } = await supabaseAdmin.from('administradores')
     .select('id').eq('email', req.user.email).single();
   if (!data) return res.status(403).json({ erro: 'Acesso restrito a coordenacao.' });
