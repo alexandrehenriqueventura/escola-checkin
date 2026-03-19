@@ -196,10 +196,6 @@
     async function loadAdmins() {
       const r = await fetch('/api/admin/administradores');
       const d = await r.json();
-      document.getElementById('admins-content').innerHTML = `
-        <table><thead><tr><th>Nome</th><th>Email</th></tr></thead><tbody>
-        ${d.administradores.map(a => `<tr><td>${a.nome||'N/A'}</td><td>${a.email}</td></tr>`).join('')}
-        </tbody></table>
     document.getElementById('admins-content').innerHTML = `
       <table><thead><tr><th>Nome</th><th>Email</th><th>Ações</th></tr></thead><tbody>
       ${d.administradores.map(a => `<tr><td>${a.nome||'N/A'}</td><td>${a.email}</td>
