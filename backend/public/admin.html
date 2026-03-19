@@ -35,11 +35,11 @@
   </nav>
   <div class="container">
     <div class="tabs">
-      <button class="tab active" onclick="showTab('stats')">📊 Estatísticas</button>
-      <button class="tab" onclick="showTab('professores')">👨‍🏫 Professores</button>
-      <button class="tab" onclick="showTab('alunos')">👨‍🎓 Alunos</button>
-      <button class="tab" onclick="showTab('salas')">🏫 Salas</button>
-      <button class="tab" onclick="showTab('admins')">🔐 Administradores</button>
+      <button class="tab active" onclick="showTab('stats, this')">📊 Estatísticas</button>
+      <button class="tab" onclick="showTab('professores'), this">👨‍🏫 Professores</button>
+      <button class="tab" onclick="showTab('alunos', this)">👨‍🎓 Alunos</button>
+      <button class="tab" onclick="showTab('salas'), this">🏫 Salas</button>
+      <button class="tab" onclick="showTab('admins', this)">🔐 Administradores</button>
     </div>
     
     <div id="stats-panel" class="panel active">
@@ -85,11 +85,9 @@
   </div>
   
   <script>
-    function showTab(name) {
-      document.querySelectorAll('.tab').forEach(t => t.classList.remove('active'));
+  function showTab(name, btnElement) {      document.querySelectorAll('.tab').forEach(t => t.classList.remove('active'));
       document.querySelectorAll('.panel').forEach(p => p.classList.remove('active'));
-      event.target.classList.add('active');
-      document.getElementById(name + '-panel').classList.add('active');
+    btnElement.classList.add('active');      document.getElementById(name + '-panel').classList.add('active');
       if(name==='stats') loadStats();
       if(name==='professores') loadProfs();
       if(name==='alunos') loadAlunos();
@@ -99,8 +97,7 @@
     
     async function loadStats() {
       const r = await fetch('/api/admin/stats');
-      const d = await r.json();
-          if (d.erro || !d.presencas_hoje) {
+    let d = await r.json();          if (d.erro || !d.presencas_hoje) {
                   d = { presencas_hoje: 0, total_professores: 0, total_alunos: 0, total_salas: 0 };
                 }
       document.getElementById('stats-content').innerHTML = `
