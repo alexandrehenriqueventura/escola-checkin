@@ -82,6 +82,17 @@ router.get('/dashboard', autenticar, isAdmin, async (req, res) => {
   });
 });
 
+// Encerrar presença manualmente (admin)
+router.patch('/presencas/:id/encerrar', autenticar, isAdmin, async (req, res) => {
+  const { error } = await supabaseAdmin
+    .from('presencas')
+    .update({ ativa: false, saida_em: new Date().toISOString() })
+    .eq('id', req.params.id);
+  
+  if (error) return res.status(500).json({ erro: error.message });
+  res.json({ mensagem: 'Presença encerrada com sucesso.' });
+});
+
 // HISTORICO
 router.get('/historico', autenticar, isAdmin, async (req, res) => {
   const { data: dataFiltro } = req.query;
