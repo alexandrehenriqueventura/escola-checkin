@@ -124,6 +124,11 @@ app.use('/api/admin', adminRoutes);
 
 app.get('/health', (req, res) => res.json({ status: 'ok' }));
 
+// Middleware 404 para rotas não encontradas
+app.use((req, res) => {
+  res.status(404).json({ error: 'Rota não encontrada' });
+});
+
 app.listen(PORT, () => {
   console.log(`Servidor rodando na porta ${PORT}`);
 });
