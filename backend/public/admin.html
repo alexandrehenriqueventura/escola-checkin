@@ -80,8 +80,14 @@
     
     <div id="admins-panel" class="panel">
       <h2>Administradores</h2>
-      <div id="admins-content">Carregando...</div>
+    <button onclick="showAddAdmin()">➕ Adicionar Administrador</button>
+    <div id="admin-form" style="display:none; margin:20px 0; padding:20px; background:#f8f9fa; border-radius:8px;">
+      <input id="admin-nome" placeholder="Nome" />
+      <input id="admin-email" placeholder="Email" />
+      <button onclick="addAdmin()">Salvar</button>
+      <button onclick="document.getElementById('admin-form').style.display='none'">Cancelar</button>
     </div>
+    <div id="admins-content">Carregando...</div>    </div>
   </div>
   
   <script>
@@ -194,8 +200,31 @@
         <table><thead><tr><th>Nome</th><th>Email</th></tr></thead><tbody>
         ${d.administradores.map(a => `<tr><td>${a.nome||'N/A'}</td><td>${a.email}</td></tr>`).join('')}
         </tbody></table>
-      `;
-    }
+    document.getElementById('admins-content').innerHTML = `
+      <table><thead><tr><th>Nome</th><th>Email</th><th>Ações</th></tr></thead><tbody>
+      ${d.administradores.map(a => `<tr><td>${a.nome||'N/A'}</td><td>${a.email}</td>
+      <td><button class="btn-danger" onclick="delAdmin('${a.id}')">Remover</button></td></tr>`).join('')}
+      </tbody></table>
+    `;  async function addAdmin() {
+    const nome = document.getElementById('admin-nome').value;
+    const email = document.getElementById('admin-email').value;
+    if (!email) return alert('Email é obrigatório');
+    await fetch('/api/admin/administradores', {
+      method: 'POST',
+      headers: {'Content-Type': 'application/json'},
+      body: JSON.stringify({ nome, email })
+    });
+    document.getElementById('admin-form').style.display='none';
+    document.getElementById('admin-nome').value = '';
+    document.getElementById('admin-email').value = '';
+    loadAdmins();
+  }
+
+  async function delAdmin(id) {
+    if(!confirm('Remover administrador?')) return;
+    await fetch(`/api/admin/administradores/${id}`, { method: 'DELETE' });
+    loadAdmins();
+  }
     
     loadStats();
   </script>
