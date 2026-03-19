@@ -12,26 +12,30 @@ async function autenticar(req, res, next) {
   }
   
   next();
-}}
+}
 
 async function isAdmin(req, res, next) {
-    try {
-          const { data: admin, error } = await supabaseAdmin
-                // Verificar se há algum administrador cadastrado
-                const { data: allAdmins, error: listError } = await supabaseAdmin
-                        .from('administradores').select('*');
-          // Se não houver nenhum admin cadastrado, permitir acesso para primeiro cadastro
-          if (!listError && (!allAdmins || allAdmins.length === 0)) {
-                  return next();
-                }
-            .from('administradores').select('*').eq('email', req.user.email).single();
-          if (error || !admin) {
-                  return res.status(403).json({ error: 'Acesso restrito a administradores.' });
-                }
-          next();
-        } catch (err) {
-          return res.status(500).json({ error: 'Erro ao validar permissoes.' });
-        }
+  try {
+    // Verificar se há algum administrador cadastrado
+    const { data: allAdmins, error: listError } = await supabaseAdmin
+      .from('administradores').select('*');
+    
+    // Se não houver nenhum admin cadastrado, permitir acesso para primeiro cadastro
+    if (!listError && (!allAdmins || allAdmins.length === 0)) {
+      return next();
+    }
+    
+    const { data: admin, error } = await supabaseAdmin
+      .from('administradores').select('*').eq('email', req.user.email).single();
+    
+    if (error || !admin) {
+      return res.status(403).json({ error: 'Acesso restrito a administradores.' });
+    }
+    
+    next();
+  } catch (err) {
+    return res.status(500).json({ error: 'Erro ao validar permissoes.' });
   }
+}
 
 module.exports = { autenticar, isAdmin };
