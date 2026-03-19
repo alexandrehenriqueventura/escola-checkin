@@ -1,28 +1,18 @@
 const { supabaseAdmin } = require('../services/supabase');
 
 async function autenticar(req, res, next) {
-  const authHeader = req.headers.authorization;
-  if (!authHeader || !authHeader.startsWith('Bearer ')) {
-    return res.status(401).json({ erro: 'Token nao fornecido.' });
+  // Verifica se o usuário está autenticado via sessão do Passport
+  if (!req.isAuthenticated || !req.isAuthenticated()) {
+    return res.status(401).json({ error: 'Não autenticado. Faça login primeiro.' });
   }
-  const token = authHeader.split(' ')[1];
-  try {
-    const { data: { user }, error } = await supabaseAdmin.auth.getUser(token);
-    if (error || !user) {
-      return res.status(401).json({ erro: 'Token invalido ou expirado.' });
-    }
-    const { data: professor, error: errProf } = await supabaseAdmin
-      .from('professores').select('*').eq('email', user.email).single();
-    if (errProf || !professor) {
-      return res.status(403).json({ erro: 'Professor nao cadastrado no sistema.' });
-    }
-    req.user = user;
-    req.professor = professor;
-    next();
-  } catch (err) {
-    return res.status(500).json({ erro: 'Erro ao validar autenticacao.' });
+  
+  // Adiciona dados do usuário ao req para uso nos handlers
+  if (!req.user) {
+    return res.status(401).json({ error: 'Usuário não encontrado na sessão.' });
   }
-}
+  
+  next();
+}}
 
 async function isAdmin(req, res, next) {
     try {
