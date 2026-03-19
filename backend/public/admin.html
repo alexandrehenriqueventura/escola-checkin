@@ -201,8 +201,9 @@
       ${d.administradores.map(a => `<tr><td>${a.nome||'N/A'}</td><td>${a.email}</td>
       <td><button class="btn-danger" onclick="delAdmin('${a.id}')">Remover</button></td></tr>`).join('')}
       </tbody></table>
-    `;  async function addAdmin() {
-    const nome = document.getElementById('admin-nome').value;
+  } 
+  
+    async function addAdmin() {const nome = document.getElementById('admin-nome').value;
     const email = document.getElementById('admin-email').value;
     if (!email) return alert('Email é obrigatório');
     await fetch('/api/admin/administradores', {
