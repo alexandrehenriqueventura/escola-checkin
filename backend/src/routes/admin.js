@@ -3,7 +3,6 @@ const router = express.Router();
 const { supabaseAdmin } = require('../services/supabase');
 const { autenticar } = require('../middleware/authMiddleware');
 
-a
 // Rota GET para servir a página de inicialização
 router.get('/init-admin', autenticar, (req, res) => {
   const path = require('path');
@@ -40,7 +39,8 @@ router.post('/init-admin', autenticar, async (req, res) => {
         } catch (err) {
           res.status(500).json({ error: 'Erro ao inicializar administrador.' });
         }
-  });sync function isAdmin(req, res, next) {
+  })
+  ;sync async function isAdmin(req, res, next) {
   const { data } = await supabaseAdmin.from('administradores')
     .select('id').eq('email', req.user.email).single();
   if (!data) return res.status(403).json({ erro: 'Acesso restrito a coordenacao.' });
