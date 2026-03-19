@@ -24,4 +24,17 @@ async function autenticar(req, res, next) {
   }
 }
 
-module.exports = { autenticar };
+async function isAdmin(req, res, next) {
+    try {
+          const { data: admin, error } = await supabaseAdmin
+            .from('administradores').select('*').eq('email', req.user.email).single();
+          if (error || !admin) {
+                  return res.status(403).json({ error: 'Acesso restrito a administradores.' });
+                }
+          next();
+        } catch (err) {
+          return res.status(500).json({ error: 'Erro ao validar permissoes.' });
+        }
+  }
+
+module.exports = { autenticar, isAdmin };
