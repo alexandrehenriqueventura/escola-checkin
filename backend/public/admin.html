@@ -102,8 +102,9 @@
     }
     
     async function loadStats() {
+  try {
       const r = await fetch('/api/admin/stats');
-    let d = await r.json();          if (d.erro || d.presencas_hoje === undefined) {
+    if (!r.ok) throw new Error(`HTTP ${r.status}`);    let d = await r.json();          if (d.erro || d.presencas_hoje === undefined) {
                   d = { presencas_hoje: 0, total_professores: 0, total_alunos: 0, total_salas: 0 };
                 }
       document.getElementById('stats-content').innerHTML = `
@@ -113,6 +114,10 @@
           <div style="background:#e8f5e9; padding:20px; border-radius:8px;"><h3>${d.total_alunos}</h3><p>Alunos</p></div>
           <div style="background:#fff3e0; padding:20px; border-radius:8px;"><h3>${d.total_salas}</h3><p>Salas</p></div>
         </div>
+  } catch (error) {
+    console.error('Erro ao carregar estatísticas:', error);
+    document.getElementById('stats-content').innerHTML = '<p style="color:red;">Erro ao carregar estatísticas. Verifique sua autenticação.</p>';
+  }
       `;
     }
     
