@@ -103,7 +103,7 @@
     
     async function loadStats() {
       const r = await fetch('/api/admin/stats');
-    let d = await r.json();          if (d.erro || !d.presencas_hoje) {
+    let d = await r.json();          if (d.erro || d.presencas_hoje === undefined) {
                   d = { presencas_hoje: 0, total_professores: 0, total_alunos: 0, total_salas: 0 };
                 }
       document.getElementById('stats-content').innerHTML = `
