@@ -3,7 +3,8 @@ const router = express.Router();
 const { supabaseAdmin } = require('../services/supabase');
 const { autenticar } = require('../middleware/authMiddleware');
 
-router.get('/sala/:token', async (req, res) => {
+// GET /sala/:token - Busca informações da sala pelo QR token (requer autenticação)
+router.get('/sala/:token', autenticar, async (req, res) => {
   const { token } = req.params;
   const { data: sala, error } = await supabaseAdmin
     .from('salas').select('id, nome, andar, descricao')
@@ -12,6 +13,7 @@ router.get('/sala/:token', async (req, res) => {
   res.json({ sala });
 });
 
+// POST /confirmar - Registra presença do professor na sala
 router.post('/confirmar', autenticar, async (req, res) => {
   const { qr_token } = req.body;
   const professorId = req.professor.id;
@@ -29,6 +31,7 @@ router.post('/confirmar', autenticar, async (req, res) => {
   res.json({ mensagem: `${req.professor.nome} confirmado na ${sala.nome}!`, presenca, sala });
 });
 
+// POST /encerrar - Encerra presença ativa do professor
 router.post('/encerrar', autenticar, async (req, res) => {
   const { data, error } = await supabaseAdmin.from('presencas')
     .update({ ativa: false, saida_em: new Date().toISOString() })
