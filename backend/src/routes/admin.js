@@ -3,50 +3,67 @@ const router = express.Router();
 const { supabaseAdmin } = require('../services/supabase');
 const { autenticar } = require('../middleware/authMiddleware');
 
-43
 // Rota GET para servir a página de inicialização
 router.get('/init-admin', autenticar, (req, res) => {
   const path = require('path');
-  res.sendFile(path.join(__dirname, '../../public/init-admin.html'));});
-  
+  res.sendFile(path.join(__dirname, '../../public/init-admin.html'));
+});
+
 // ROTA DE INICIALIZAÇÃO - Adiciona o primeiro administrador
 router.post('/init-admin', autenticar, async (req, res) => {
-    try {
-          // Verificar se já existe algum administrador
-          const { data: admins, error: checkError } = await supabaseAdmin
-                  .from('administradores').select('*');
-      
-          if (checkError) {
-                  return res.status(500).json({ error: 'Erro ao verificar administradores.' });
-                }
-      
-          // Se já existir algum admin, bloquear
-          if (admins && admins.length > 0) {
-                  return res.status(403).json({ error: 'Já existe um administrador cadastrado.' });
-                }
-      
-          // Adicionar o usuário logado como primeiro admin
-          const { error: insertError } = await supabaseAdmin
-                  .from('administradores').insert({ 
-                            name: req.user.name,
-                            email: req.user.email
-                                    });
-      
-          if (insertError) {
-                  return res.status(500).json({ error: 'Erro ao cadastrar administrador.' });
-                }
-      
-          res.json({ message: 'Primeiro administrador cadastrado com sucesso!' });
-        } catch (err) {
-          res.status(500).json({ error: 'Erro ao inicializar administrador.' });
-        }
-  })
-  
+  try {
+    // Verificar se já existe algum administrador
+    const { data: admins, error: checkError } = await supabaseAdmin
+      .from('administradores').select('*');
+
+    if (checkError) {
+      return res.status(500).json({ error: 'Erro ao verificar administradores.' });
+    }
+
+    // Se já existir algum admin, bloquear
+    if (admins && admins.length > 0) {
+      return res.status(403).json({ error: 'Já existe um administrador cadastrado.' });
+    }
+
+    // Adicionar o usuário logado como primeiro admin
+    const { error: insertError } = await supabaseAdmin
+      .from('administradores').insert({
+        name: req.user.name,
+        email: req.user.email
+      });
+
+    if (insertError) {
+      return res.status(500).json({ error: 'Erro ao cadastrar administrador.' });
+    }
+
+    res.json({ message: 'Primeiro administrador cadastrado com sucesso!' });
+  } catch (err) {
+    res.status(500).json({ error: 'Erro ao inicializar administrador.' });
+  }
+});
+
+// Middleware: verifica se o usuário autenticado é administrador
 async function isAdmin(req, res, next) {
-  const { data } = await supabaseAdmin.from('administradores')
-    .select('id').eq('email', req.user.email).single();
-  if (!data) return res.status(403).json({ erro: 'Acesso restrito a coordenacao.' });
-  next();
+  try {
+    // Permite acesso se ainda não houver nenhum admin cadastrado (primeiro cadastro)
+    const { data: allAdmins, error: listError } = await supabaseAdmin
+      .from('administradores').select('*');
+
+    if (!listError && (!allAdmins || allAdmins.length === 0)) {
+      return next();
+    }
+
+    const { data: admin, error } = await supabaseAdmin
+      .from('administradores').select('id').eq('email', req.user.email).single();
+
+    if (error || !admin) {
+      return res.status(403).json({ error: 'Acesso restrito a administradores.' });
+    }
+
+    next();
+  } catch (err) {
+    return res.status(500).json({ error: 'Erro ao validar permissoes.' });
+  }
 }
 
 // PROFESSORES
@@ -127,7 +144,6 @@ router.patch('/presencas/:id/encerrar', autenticar, isAdmin, async (req, res) =>
     .from('presencas')
     .update({ ativa: false, saida_em: new Date().toISOString() })
     .eq('id', req.params.id);
-  
   if (error) return res.status(500).json({ erro: error.message });
   res.json({ mensagem: 'Presença encerrada com sucesso.' });
 });
@@ -214,4 +230,5 @@ router.get('/stats', autenticar, isAdmin, async (req, res) => {
     total_salas: totalSalas.count || 0,
   });
 });
+
 module.exports = router;
